@@ -1,33 +1,27 @@
 name: Merge Karabiner Docs
-    on:
-      workflow_dispatch: # 允许你在网页上点击按钮手动触发
+on:
+  workflow_dispatch:
 
-    jobs:
-      merge-job:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout Forked Repo
-            uses: actions/checkout@v4
+jobs:
+  merge-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Forked Repo
+        uses: actions/checkout@v4
 
-          - name: Merge Markdown Files
-            run: |
-              # 进入英文文档目录
-              cd sites/karabiner-elements/content/en/docs/
-              
-              # 初始化目标文件
-              echo "" > karabiner_docs_monolith.md
-              
-              # 遍历并注入路径标签
-              find . -name "*.md" | while read -r file; do
-                  echo -e "\n\n# Document Source: ${file#./}\n" >> karabiner_docs_monolith.md
-                  cat "$file" >> karabiner_docs_monolith.md
-              done
-              
-              # 将合并好的文件移到仓库根目录
-              mv karabiner_docs_monolith.md ../../../../../
+      - name: Merge Markdown Files
+        run: |
+          cd sites/karabiner-elements/content/en/docs/
 
-          - name: Upload Result to GitHub
-            uses: actions/upload-artifact@v4
-            with:
-              name: karabiner-final-docs
-              path: karabiner_docs_monolith.md
+          find . -name "*.md" | sort | while read -r file; do
+            echo -e "\n\n# Document Source: ${file#./}\n" >> /tmp/karabiner_docs_monolith.md
+            cat "$file" >> /tmp/karabiner_docs_monolith.md
+          done
+
+          mv /tmp/karabiner_docs_monolith.md $GITHUB_WORKSPACE/
+
+      - name: Upload Result to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: karabiner-final-docs
+          path: ${{ github.workspace }}/karabiner_docs_monolith.md
